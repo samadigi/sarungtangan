@@ -1,167 +1,3 @@
-
-kok gini ya
-
-
-Kode yang ditempelkan (1).js
-JavaScript
-ini kode.gs nya apa yg harus di lakukan agar bisa baca kamera di vercel
-
-
-Teks yang ditempel (1)(5).txt
-Dokumen
-
-Nah, saya sudah cek Index.html yang baru kamu kirim.
-
-Kode kameranya sebenarnya sudah benar. Di bagian inisialisasiKamera() sudah menggunakan navigator.mediaDevices.getUserMedia() untuk meminta kamera depan. 
-
-
-Jadi susunannya sekarang:
-
-GAS Code.gs → sudah ALLOWALL ✅
-GAS Index.html → sudah getUserMedia() ✅
-Tombol aktivasi kamera → sudah ada dan memanggil inisialisasiKamera() ✅ 
-
-
-Masalah utamanya kemungkinan ada pada wrapper Vercel.
-
-Gunakan index.html Vercel dengan iframe:
-
-<iframe
-  src="https://script.google.com/macros/s/AKfycbxe3UxwzevjwKebjNv6-sMvIhMvrcpFqdUWd5m7EovWe_ScJEKjH1WSw0WfNgRk9laTGA/exec"
-  allow="camera *; microphone *; geolocation *"
-  allowfullscreen>
-</iframe>
-Tetapi ada masalah arsitektur yang lebih penting: GAS di dalam iframe Vercel berarti kamera sebenarnya diminta oleh halaman Google yang tertanam di Vercel, bukan oleh halaman Vercel langsung. Ini bisa terkena pembatasan permission iframe/browser.
-
-Solusi paling stabil
-Jangan jadikan seluruh GAS sebagai iframe.
-
-Buat:
-
-Vercel
-→ menjalankan kamera + Face API + UI secara langsung
-
-Google Apps Script
-→ hanya backend untuk Spreadsheet + Google Drive.
-
-Ini menghilangkan lapisan:
-
-Vercel → iframe → Google Apps Script → kamera
-
-menjadi:
-
-Vercel → kamera langsung ✅
-
-Masalah berikutnya, Index.html kamu sekarang banyak menggunakan:
-
-google.script.run
-misalnya untuk pendaftaran karyawan. 
-
-
-Kalau dipindahkan langsung ke Vercel, bagian tersebut perlu diubah menjadi API fetch() ke Apps Script.
-
-Kalau tujuan kamu kamera benar-benar berfungsi di Vercel, saya sarankan cara kedua ini. Saya bisa ubahkan Code.gs + Index.html Vercel supaya kamera berjalan langsung dari Vercel tetapi database/foto tetap masuk ke Google Sheet dan Drive seperti sekarang.
-
-
-jadi apa yang harus saya lakukan ke vercel
-
-Yang perlu kamu lakukan di Vercel simpel:
-
-Jangan pakai iframe GAS untuk kamera.
-
-Jalankan Index.html kamera langsung di Vercel.
-
-Ubah bagian google.script.run di Index.html menjadi fetch() ke Web App Google Apps Script.
-
-Google Apps Script tetap dipakai untuk simpan data ke Google Sheet dan upload foto ke Drive.
-
-Karena kode kamu sekarang kamera sudah benar di frontend, tetapi fungsi seperti pendaftaran masih memanggil:
-
-google.script.run
-yang hanya berjalan di halaman Google Apps Script, bukan langsung di Vercel. 
-
-
-Jadi struktur akhirnya:
-
-VERCEL
-Index.html
-- Kamera
-- Face Detection
-- UI
-
-        ↓ fetch()
-
-GOOGLE APPS SCRIPT
-Code.gs
-- Simpan Spreadsheet
-- Upload foto Drive
-- Ambil dashboard
-Jangan cuma upload wrapper iframe ke Vercel. Upload frontend aplikasi yang sebenarnya.
-
-Kalau kamu mau, langkah berikutnya saya bisa langsung ubah kode kamu menjadi versi Vercel-ready, jadi kamu tinggal upload index.html ke Vercel tanpa merusak fungsi database Google Sheet/Drive.
-
-
-ubah kode kamu menjadi versi Vercel-ready  
-
-Memproses selama 57s
-Sudah saya ubah menjadi versi Vercel-ready. Kamera sekarang berjalan langsung dari halaman Vercel, bukan dari iframe Google Apps Script. Kode kamera asli tetap menggunakan getUserMedia() seperti aplikasi kamu sebelumnya. 
-
-
-Struktur yang saya buat:
-
-vercel-ready-km35a/
-├── index.html       ← frontend + kamera langsung di Vercel
-├── vercel.json      ← izin kamera/mic/geolocation
-├── api/
-│   └── gas.js       ← penghubung Vercel → Apps Script
-└── Code.gs          ← backend Apps Script versi API
-1. Google Apps Script
-Ganti Code.gs lama dengan file baru ini, kemudian:
-
-Deploy → Manage deployments → Edit ✏️ → New version → Deploy
-
-Download Code.gs
-
-2. Vercel
-Upload file berikut ke GitHub/Vercel dengan struktur folder yang sama:
-
-Index.html Vercel
-
-API gas.js
-
-vercel.json
-
-Atau paling mudah download semuanya sekaligus:
-
-Download Paket Vercel Ready ZIP
-
-Setelah Vercel selesai deploy, buka link Vercel langsung, lalu tekan:
-
-🎥 IZINKAN & AKTIFKAN KAMERA
-
-Browser akan meminta izin kamera. Pilih Allow/Izinkan.
-
-Saya juga mempertahankan sistem lama seperti pendaftaran karyawan, upload foto ke Drive, pengambilan, dashboard, log, dan Excel. Pemanggilan google.script.run yang sebelumnya hanya bisa berjalan di Apps Script sekarang dijembatani melalui API Vercel. Google Apps Script memang mendukung doPost(e) untuk menerima request HTTP dari aplikasi eksternal. 
-
-
-
-index.html
-HTML
-
-
-gas.js
-Kode
-
-
-vercel.json
-Kode
-
-
-index.html
-
-
-
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -780,17 +616,39 @@ index.html
   }
 
   function muatRiwayat() {
-    google.script.run.withSuccessHandler((logs) => {
-      const list = document.getElementById('log-list');
-      list.innerHTML = '';
-      if(logs.length === 0) { list.innerHTML = '<li style="padding:15px; text-align:center; color:#888;">Belum ada aktivitas.</li>'; return; }
-      logs.forEach(log => {
-        const item = document.createElement('li'); item.className = 'log-item';
-        let linkFoto = log.foto && log.foto.startsWith('http') ? `<a href="${log.foto}" target="_blank">Foto</a>` : '';
-        item.innerHTML = `<div><span style="color:#888;">${log.time}</span> <b>${log.nama}</b> (${log.bay})</div><div>${linkFoto}</div>`;
-        list.appendChild(item);
-      });
-    }).getRecentLogs();
+    google.script.run
+      .withSuccessHandler((logs) => {
+        const list = document.getElementById('log-list');
+        list.innerHTML = '';
+
+        if (!Array.isArray(logs)) {
+          console.error('Respons getRecentLogs bukan array:', logs);
+          const pesan = logs && logs.message ? logs.message : 'Respons backend tidak valid.';
+          list.innerHTML = '<li style="padding:15px; text-align:center; color:#da3633;">' + pesan + '</li>';
+          return;
+        }
+
+        if (logs.length === 0) {
+          list.innerHTML = '<li style="padding:15px; text-align:center; color:#888;">Belum ada aktivitas.</li>';
+          return;
+        }
+
+        logs.forEach(log => {
+          const item = document.createElement('li');
+          item.className = 'log-item';
+          let linkFoto = log.foto && String(log.foto).startsWith('http')
+            ? `<a href="${log.foto}" target="_blank">Foto</a>`
+            : '';
+          item.innerHTML = `<div><span style="color:#888;">${log.time || ''}</span> <b>${log.nama || ''}</b> (${log.bay || ''})</div><div>${linkFoto}</div>`;
+          list.appendChild(item);
+        });
+      })
+      .withFailureHandler((err) => {
+        console.error('getRecentLogs gagal:', err);
+        const list = document.getElementById('log-list');
+        list.innerHTML = '<li style="padding:15px; text-align:center; color:#da3633;">Koneksi backend gagal.</li>';
+      })
+      .getRecentLogs();
   }
 
   let chartInstances = {};
