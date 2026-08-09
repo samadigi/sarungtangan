@@ -7,13 +7,20 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
- const GAS_URL =
-  "https://script.google.com/macros/s/AKfycbxfxVf-gfSYJdpHyhR_1FhGyugmVUS1HZ5rci7PnzQOzGMGxtFFXidiWugHwLkPnmKGLQ/exec";
+  const GAS_URL =
+    "https://script.google.com/macros/s/AKfycbxfxVf-gfSYJdpHyhR_1FhGyugmVUS1HZ5rci7PnzQOzGMGxtFFXidiWugHwLkPnmKGLQ/exec";
 
   if (req.method === "GET") {
     return res.status(200).json({
       success: true,
       message: "Proxy Vercel aktif"
+    });
+  }
+
+  if (req.method !== "POST") {
+    return res.status(405).json({
+      success: false,
+      message: "Method tidak diizinkan"
     });
   }
 
@@ -36,6 +43,7 @@ export default async function handler(req, res) {
 
     try {
       const data = JSON.parse(text);
+
       return res.status(200).json(data);
 
     } catch (e) {
@@ -50,6 +58,8 @@ export default async function handler(req, res) {
     }
 
   } catch (error) {
+    console.error("GAS Proxy Error:", error);
+
     return res.status(500).json({
       success: false,
       message: "Gagal menghubungi Apps Script.",
