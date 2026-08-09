@@ -1,36 +1,42 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aplikasi</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <title>Web App</title>
 
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     html, body {
-      margin: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
+      background: #000;
     }
 
-    iframe {
+    #appFrame {
+      display: block;
       width: 100%;
       height: 100dvh;
       border: 0;
-      display: block;
+      background: #fff;
     }
   </style>
 </head>
 
 <body>
-
-<iframe
-  src="https://script.google.com/macros/s/AKfycbxe3UxwzevjwKebjNv6-sMvIhMvrcpFqdUWd5m7EovWe_ScJEKjH1WSw0WfNgRk9laTGA/exec"
-  allow="camera *; microphone *; geolocation *"
-  allowfullscreen>
-</iframe>
-
+  <iframe
+    id="appFrame"
+    src="https://script.google.com/macros/s/AKfycbxe3UxwzevjwKebjNv6-sMvIhMvrcpFqdUWd5m7EovWe_ScJEKjH1WSw0WfNgRk9laTGA/exec"
+    allow="camera *; microphone *; geolocation *; clipboard-read *; clipboard-write *"
+    allowfullscreen
+    referrerpolicy="strict-origin-when-cross-origin">
+  </iframe>
 </body>
 </html>
